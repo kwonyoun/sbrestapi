@@ -1,0 +1,136 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- MyBatis에게 Mapper 경로를 적어야 한다. -->
+<mapper namespace="com.example.sbrestapi.mapper.BoardMapper">
+	
+	<insert id="insertBoard">
+		INSERT INTO board
+		(
+			title,
+			content
+			<if test="studentsId != 0">
+			,students_id
+			</if>
+		)
+		VALUES
+		(
+			#{title},
+			#{content}
+			<if test="studentsId != 0">
+			,#{studentsId}
+			</if>
+		)
+	</insert>
+	
+	<select id="selectAllBoardListTest" resultType="map">
+		SELECT
+			b.board_id AS boardId,
+			s.students_id AS studentsId,
+			s.students_name AS studentsName,
+			b.title,
+			b.content,
+			IFNULL(DATE_FORMAT(b.update_at,'%Y-%m-%d'),'-') AS updateAt,
+			DATE_FORMAT(b.create_at,'%Y-%m-%d') AS createAt,
+			b.cnt
+		FROM board AS b
+		INNER JOIN students AS s
+		ON b.students_id = s.students_id
+		LIMIT #{pageNum}, #{pageSize}
+	</select>
+	
+	<!-- *join으로 조회할 때  resultType을 map으로 -->
+	<select id="selectAllBoardList" resultType="map">
+		SELECT
+			b.board_id AS boardId,
+			s.students_id AS studentsId,
+			s.students_name AS studentsName,
+			b.title,
+			b.content,
+			IFNULL(DATE_FORMAT(b.update_at,'%Y-%m-%d'),'-') AS updateAt,
+			DATE_FORMAT(b.create_at,'%Y-%m-%d') AS createAt,
+			b.cnt
+		FROM board AS b
+		INNER JOIN students AS s
+		ON b.students_id = s.students_id
+	</select>
+	
+	<select id="selectAllBoardTotal" resultType="int">
+		SELECT
+			COUNT(*) AS boardCnt
+		FROM board AS b
+		INNER JOIN students AS s
+		ON b.students_id = s.students_id
+	</select>
+	
+	<update id="updateBoard">
+		UPDATE board
+		SET 
+			title = #{title},
+			content = #{content},
+			update_at= NOW()
+		WHERE board_id = #{boardId}
+	</update>
+	
+	<delete id="deleteBoard">
+		DELETE FROM board
+		WHERE board_id = #{boardId}
+	</delete>
+	
+	<select id="selectBoardOne" resultType="BoardVO">
+		SELECT
+			title,
+			content,
+			create_at,
+			cnt
+		FROM board
+		WHERE board_id = #{boardId}
+	</select>
+	
+	<!-- 조회 수 업데이트 -->
+	<update id="updateBoardViews">
+		UPDATE board
+		SET 
+			cnt = #{cnt}
+		WHERE board_id = #{boardId}
+	</update>
+	
+	<select id="selectSearchBoardList" resultType="map">
+		SELECT
+			b.board_id AS boardId,
+			s.students_id AS studentsId,
+			s.students_name AS studentsName,
+			b.title,
+			b.content,
+			IFNULL(DATE_FORMAT(b.update_at,'%Y-%m-%d'),'-') AS updateAt,
+			DATE_FORMAT(b.create_at,'%Y-%m-%d') AS createAt,
+			b.cnt
+		FROM board AS b
+		INNER JOIN students AS s
+		ON b.students_id = s.students_id
+		WHERE s.students_name LIKE CONCAT('%',#{studentsName},'%')
+	</select>
+	
+	
+	<select id="selectBoardStatistics" resultType="map">
+	select 
+		count(*) as studentsCnt,
+	(
+	select
+		count(*)
+	from board
+	) as boardCnt,
+	(select 
+		count(distinct(b.students_id))
+	from students as s
+	inner join board as b
+	on s.students_id = b.students_id
+	) as writerCnt,
+	(select 
+		sum(cnt)
+	from board
+	) as viewsCnt
+	from students 
+	</select>
+	
+	
+	
+</mapper>
